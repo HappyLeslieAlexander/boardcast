@@ -151,6 +151,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
         
         let websocket = null;
         let authenticated = false;
+        let isUpdatingFromServer = false;
         
         const connectIcon = '<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>';
         const disconnectIcon = '<path d="M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z"/>';
@@ -174,8 +175,20 @@ const WhiteboardHTML = `<!DOCTYPE html>
                 fetch('/content', { credentials: 'include' }).then(r => r.text()).then(content => whiteboard.value = content);
                 
                 websocket = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
-                websocket.onmessage = e => whiteboard.value = e.data;
-                whiteboard.oninput = () => websocket?.readyState === 1 && websocket.send(whiteboard.value);
+                websocket.onmessage = e => {
+                    if (isUpdatingFromServer) return;
+                    const cursorStart = whiteboard.selectionStart;
+                    const cursorEnd = whiteboard.selectionEnd;
+                    whiteboard.value = e.data;
+                    whiteboard.setSelectionRange(cursorStart, cursorEnd);
+                };
+                whiteboard.oninput = () => {
+                    if (websocket?.readyState === 1) {
+                        isUpdatingFromServer = true;
+                        websocket.send(whiteboard.value);
+                        setTimeout(() => isUpdatingFromServer = false, 50);
+                    }
+                };
             })
             .catch(() => passwordInput.value = '');
         }
