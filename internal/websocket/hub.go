@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/http"
 	"sync"
+	"time"
 
 	"github.com/gorilla/websocket"
 )
@@ -22,6 +23,7 @@ type Hub struct {
 	broadcast chan BroadcastMessage
 	upgrader  websocket.Upgrader
 	mu        sync.RWMutex
+	cleanup   chan struct{}
 }
 
 // NewHub creates a new WebSocket hub.
@@ -29,6 +31,7 @@ func NewHub() *Hub {
 	return &Hub{
 		clients:   make(map[*websocket.Conn]bool),
 		broadcast: make(chan BroadcastMessage, 256),
+		cleanup:   make(chan struct{}),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -43,6 +46,7 @@ func NewHub() *Hub {
 // Start begins the message broadcasting goroutine.
 func (h *Hub) Start() {
 	go h.run()
+	go h.startCleanupRoutine()
 }
 
 // run handles message broadcasting to all connected clients.
@@ -78,6 +82,13 @@ func (h *Hub) HandleConnection(w http.ResponseWriter, r *http.Request) {
 		log.Printf("WebSocket upgrade error: %v", err)
 		return
 	}
+
+	// Set read deadline and pong handler
+	conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+	conn.SetPongHandler(func(string) error {
+		conn.SetReadDeadline(time.Now().Add(60 * time.Second))
+		return nil
+	})
 
 	h.addClient(conn)
 	defer h.removeClient(conn)
@@ -155,4 +166,44 @@ func (h *Hub) removeClient(conn *websocket.Conn) {
 		conn.Close()
 		log.Printf("Client disconnected. Total clients: %d", len(h.clients))
 	}
+}
+
+// startCleanupRoutine starts a background goroutine that periodically checks for dead connections.
+func (h *Hub) startCleanupRoutine() {
+	ticker := time.NewTicker(30 * time.Second)
+	defer ticker.Stop()
+
+	for {
+		select {
+		case <-ticker.C:
+			h.cleanupDeadConnections()
+		case <-h.cleanup:
+			return
+		}
+	}
+}
+
+// cleanupDeadConnections removes connections that are no longer responsive.
+func (h *Hub) cleanupDeadConnections() {
+	h.mu.RLock()
+	var deadConnections []*websocket.Conn
+
+	for conn := range h.clients {
+		// Send a ping to test if connection is alive
+		if err := conn.WriteControl(websocket.PingMessage, []byte{}, time.Now().Add(5*time.Second)); err != nil {
+			deadConnections = append(deadConnections, conn)
+		}
+	}
+	h.mu.RUnlock()
+
+	// Remove dead connections
+	for _, conn := range deadConnections {
+		log.Printf("Removing dead connection")
+		h.removeClient(conn)
+	}
+}
+
+// Stop gracefully shuts down the hub.
+func (h *Hub) Stop() {
+	close(h.cleanup)
 }
