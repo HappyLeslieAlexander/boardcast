@@ -1,23 +1,14 @@
 <div align="center">
-    <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 14 14">
-        <g fill="none" fill-rule="evenodd" clip-rule="evenodd">
-            <path fill="#8fbffa" d="M.58 1.961A1.92 1.92 0 0 1 1.937 1.4H12.06a1.92 1.92 0 0 1 1.92 1.92v7.362a1.92 1.92 0 0 1-1.92 1.92H6.995A6.283 6.283 0 0 0 .017 5.524V3.32c0-.51.202-.998.563-1.358Z"/>
-            <path fill="#2859c5" d="M.768 6.73a.75.75 0 1 0 0 1.5a3.533 3.533 0 0 1 3.533 3.532a.75.75 0 0 0 1.5 0A5.033 5.033 0 0 0 .768 6.73m0 2.676a.75.75 0 0 0 0 1.5a.856.856 0 0 1 .856.856a.75.75 0 1 0 1.5 0A2.356 2.356 0 0 0 .768 9.406"/>
-        </g>
-    </svg>
+  <img src="https://cdn.yobc.de/assets/boardcast.png" alt="boardcast" width="300">
 </div>
 
 <div align="center">
-    <strong>一个简单、安全的实时协作白板应用</strong>
-</div>
-
-<div align="center">
-    <a href="#特性">特性</a> •
-    <a href="#上手">上手</a> •
-    <a href="#安装">安装</a> •
-    <a href="#配置">配置</a> •
-    <a href="#部署">部署</a> •
-    <a href="#开发">开发</a>
+  <a href="#特性">特性</a> •
+  <a href="#上手">上手</a> •
+  <a href="#安装">安装</a> •
+  <a href="#配置">配置</a> •
+  <a href="#部署">部署</a> •
+  <a href="#开发">开发</a>
 </div>
 
 ## 概述
