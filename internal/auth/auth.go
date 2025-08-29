@@ -28,9 +28,19 @@ func NewManager(password string) (*Manager, error) {
 		return nil, err
 	}
 
+	store := sessions.NewCookieStore([]byte(SecretKey))
+
+	store.Options = &sessions.Options{
+		Path:     "/",
+		MaxAge:   86400 * 7,
+		HttpOnly: true,
+		Secure:   false,
+		SameSite: http.SameSiteLaxMode,
+	}
+
 	return &Manager{
 		hashedPassword: hashedPassword,
-		store:          sessions.NewCookieStore([]byte(SecretKey)),
+		store:          store,
 	}, nil
 }
 
@@ -43,6 +53,10 @@ type LoginRequest struct {
 func (m *Manager) IsAuthenticated(r *http.Request) bool {
 	session, err := m.store.Get(r, SessionName)
 	if err != nil {
+		return false
+	}
+
+	if session.IsNew {
 		return false
 	}
 
@@ -91,5 +105,8 @@ func (m *Manager) setAuthStatus(w http.ResponseWriter, r *http.Request, authenti
 	}
 
 	session.Values[AuthKey] = authenticated
+
+	session.Options = m.store.Options
+
 	return session.Save(r, w)
 }

@@ -159,6 +159,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
             fetch('/auth', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
                 body: JSON.stringify({ password: passwordInput.value })
             })
             .then(response => response.ok ? response.text() : Promise.reject())
@@ -170,9 +171,9 @@ const WhiteboardHTML = `<!DOCTYPE html>
                 authIcon.innerHTML = disconnectIcon;
                 authButton.title = 'Disconnect';
                 
-                fetch('/content').then(r => r.text()).then(content => whiteboard.value = content);
+                fetch('/content', { credentials: 'include' }).then(r => r.text()).then(content => whiteboard.value = content);
                 
-                websocket = new WebSocket('ws://' + location.host + '/ws');
+                websocket = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
                 websocket.onmessage = e => whiteboard.value = e.data;
                 whiteboard.oninput = () => websocket?.readyState === 1 && websocket.send(whiteboard.value);
             })
@@ -180,7 +181,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
         }
         
         function disconnect() {
-            fetch('/logout', { method: 'POST', headers: { 'Content-Type': 'application/json' } })
+            fetch('/logout', { method: 'POST', credentials: 'include' })
             .finally(() => {
                 websocket?.close();
                 authenticated = false;
