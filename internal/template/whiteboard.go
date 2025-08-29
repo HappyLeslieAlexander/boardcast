@@ -41,7 +41,6 @@ const WhiteboardHTML = `<!DOCTYPE html>
         #whiteboard:focus { outline: none; border-color: #8fbffa; box-shadow: 0 0 0 2px rgba(143,191,250,0.2); }
         .placeholder { display: flex; align-items: center; justify-content: center; color: #999; }
 
-        /* Dark theme */
         body.dark { background: #1a1a1a; }
         body.dark #whiteboard, body.dark .placeholder { background: #2d2d2d; border-color: #444; color: #e0e0e0; }
         body.dark .placeholder { color: #999; }
@@ -92,8 +91,6 @@ const WhiteboardHTML = `<!DOCTYPE html>
             light: 'M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z',
             dark: 'M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z'
         };
-        
-        // Theme toggle
         function updateThemeIcon() {
             themeBtn.querySelector('path').setAttribute('d', document.body.classList.contains('dark') ? icons.light : icons.dark);
         }
@@ -123,10 +120,8 @@ const WhiteboardHTML = `<!DOCTYPE html>
                 websocket = new WebSocket((location.protocol === 'https:' ? 'wss:' : 'ws:') + '//' + location.host + '/ws');
                 websocket.onmessage = e => {
                     if (isUpdatingFromServer) return;
-                    const cursorStart = whiteboard.selectionStart;
-                    const cursorEnd = whiteboard.selectionEnd;
                     whiteboard.value = e.data;
-                    whiteboard.setSelectionRange(cursorStart, cursorEnd);
+                    whiteboard.setSelectionRange(whiteboard.value.length, whiteboard.value.length);
                 };
                 whiteboard.oninput = () => {
                     if (websocket?.readyState === 1) {
