@@ -9,11 +9,17 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// BroadcastMessage represents a message to broadcast with sender information.
+type BroadcastMessage struct {
+	data   []byte
+	sender *websocket.Conn
+}
+
 // Hub manages WebSocket connections and broadcasting.
 type Hub struct {
 	clients   map[*websocket.Conn]bool
 	content   string
-	broadcast chan []byte
+	broadcast chan BroadcastMessage
 	upgrader  websocket.Upgrader
 	mu        sync.RWMutex
 }
@@ -22,7 +28,7 @@ type Hub struct {
 func NewHub() *Hub {
 	return &Hub{
 		clients:   make(map[*websocket.Conn]bool),
-		broadcast: make(chan []byte, 256),
+		broadcast: make(chan BroadcastMessage, 256),
 		upgrader: websocket.Upgrader{
 			ReadBufferSize:  1024,
 			WriteBufferSize: 1024,
@@ -42,16 +48,18 @@ func (h *Hub) Start() {
 // run handles message broadcasting to all connected clients.
 func (h *Hub) run() {
 	for message := range h.broadcast {
-		h.broadcastToClients(message)
+		h.broadcastToClients(message.data, message.sender)
 	}
 }
 
-// broadcastToClients sends a message to all connected clients.
-func (h *Hub) broadcastToClients(message []byte) {
+// broadcastToClients sends a message to all connected clients except the sender.
+func (h *Hub) broadcastToClients(message []byte, sender *websocket.Conn) {
 	h.mu.RLock()
 	clients := make([]*websocket.Conn, 0, len(h.clients))
 	for conn := range h.clients {
-		clients = append(clients, conn)
+		if conn != sender {
+			clients = append(clients, conn)
+		}
 	}
 	h.mu.RUnlock()
 
@@ -92,7 +100,7 @@ func (h *Hub) HandleConnection(w http.ResponseWriter, r *http.Request) {
 
 		h.updateContent(string(message))
 		select {
-		case h.broadcast <- message:
+		case h.broadcast <- BroadcastMessage{data: message, sender: conn}:
 		default:
 			log.Printf("Broadcast channel full, dropping message")
 		}
