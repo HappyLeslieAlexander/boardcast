@@ -66,3 +66,45 @@ func (h *Handlers) HandleContent(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/plain; charset=utf-8")
 	w.Write([]byte(h.wsHub.GetContent()))
 }
+
+// HandleSave saves the current whiteboard content to a file.
+func (h *Handlers) HandleSave(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if !h.auth.IsAuthenticated(r) {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.wsHub.SaveSnapshot(); err != nil {
+		http.Error(w, "Failed to save snapshot", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Snapshot saved successfully"))
+}
+
+// HandleRestore restores whiteboard content from a snapshot file.
+func (h *Handlers) HandleRestore(w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	if !h.auth.IsAuthenticated(r) {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	if err := h.wsHub.RestoreSnapshot(); err != nil {
+		http.Error(w, "Failed to restore snapshot", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	w.Write([]byte("Snapshot restored successfully"))
+}

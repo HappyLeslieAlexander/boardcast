@@ -3,19 +3,23 @@
 </div>
 
 <div align="center">
-  <a href="#特性">特性</a> •
-  <a href="#上手">上手</a> •
-  <a href="#安装">安装</a> •
-  <a href="#配置">配置</a> •
-  <a href="#部署">部署</a> •
-  <a href="#开发">开发</a>
+  <p><strong>实时协作白板 • 简单易用 • 开箱即用</strong></p>
 </div>
 
-## 概述
+<div align="center">
+  <a href="#✨-特性">✨ 特性</a> •
+  <a href="#🚀-上手">🚀 上手</a> •
+  <a href="#📦-安装">📦 安装</a> •
+  <a href="#⚙️-配置">⚙️ 配置</a> •
+  <a href="#🚢-部署">🚢 部署</a> •
+  <a href="#🛠️-开发">🛠️ 开发</a>
+</div>
 
-BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发。它允许多个用户通过密码认证后在同一个白板上实时协作编辑文本内容。应用具有简洁的用户界面，支持 WebSocket 实时同步，是团队协作、会议记录、头脑风暴的理想工具。
+## 📖 概述
 
-## 特性
+BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发。它允许多个用户通过密码认证后在同一个白板上实时协作编辑文本内容。应用具有简洁的用户界面，支持 WebSocket 实时同步，内置快照功能可随时保存和恢复内容，是团队协作、会议记录、头脑风暴的理想工具。
+
+## ✨ 特性
 
 ### 🔐 安全认证
 - 基于密码的访问控制
@@ -28,6 +32,12 @@ BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发
 - 多用户同步编辑
 - 异常断线自动重连
 - 自动内容保存和恢复
+
+### 📸 快照管理
+- 一键保存白板内容快照
+- 快速恢复历史快照
+- 本地文件持久化存储
+- 支持覆盖更新
 
 ### 📱 响应式设计
 - 适配桌面和移动设备
@@ -47,9 +57,9 @@ BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发
 - 优雅关闭和错误处理
 - 结构化日志
 
-## 上手
+## 🚀 上手
 
-### 使用 Docker（推荐）
+### 🐳 使用 Docker 部署
 
 ```bash
 # 拉取镜像
@@ -63,7 +73,7 @@ docker run -d \
   --password "your-secure-password"
 ```
 
-### 直接运行二进制文件
+### 📥 直接运行二进制文件
 
 ```bash
 # 下载最新版本
@@ -76,19 +86,39 @@ tar -xzf boardcast-linux-amd64.tar.gz
 
 访问 `http://localhost:8200` 即可开始使用。
 
-## 安装
+### 📝 使用指南
 
-### 二进制发布版本
+1. **🌐 访问应用**: 在浏览器中打开应用地址
+2. **🔑 身份认证**: 在密码框输入密码进行登录
+3. **✏️ 开始协作**: 在白板区域输入和编辑文本内容
+4. **💾 保存快照**: 点击保存按钮保存当前内容到本地文件
+5. **🔄 恢复快照**: 点击恢复按钮从快照文件恢复内容
+6. **🎨 主题切换**: 点击切换按钮切换明暗主题
+7. **🚪 断开连接**: 点击退出按钮登出并断开连接
+
+**📊 连接状态指示**：
+- **🔴 红色密码框**: 未连接状态，需要输入密码进行认证
+- **🟡 黄色密码框**: 连接中状态，正在建立WebSocket连接
+- **🟢 绿色密码框**: 已连接状态，可以正常进行实时协作
+
+**📸 快照功能说明**：
+- 快照文件保存为 `boardcast.txt`，位于应用运行目录
+- 保存快照会覆盖之前的快照文件
+- 恢复快照会将内容同步到所有在线用户
+
+## 📦 安装
+
+### 📋 二进制发布版本
 
 从 [GitHub Releases](https://github.com/yosebyte/boardcast/releases) 页面下载适合您系统的预编译二进制文件。
 
-支持的平台：
-- **Linux**: amd64, arm64, arm, 386, mips 等
-- **Windows**: amd64, arm64, 386
-- **macOS**: amd64, arm64 (Apple Silicon)
-- **FreeBSD**: amd64, arm64
+📱 **支持的平台**：
+- **🐧 Linux**: amd64, arm64, arm, 386, mips 等
+- **🪟 Windows**: amd64, arm64, 386
+- **🍎 macOS**: amd64, arm64 (Apple Silicon)
+- **🔥 FreeBSD**: amd64, arm64
 
-### 从源码编译
+### 🔧 从源码编译
 
 ```bash
 # 克隆仓库
@@ -103,7 +133,7 @@ go build -o boardcast ./cmd/boardcast
 ./boardcast --password "your-secure-password"
 ```
 
-### Docker 镜像
+### 🐳 Docker 镜像
 
 ```bash
 # 从 GitHub Container Registry 拉取
@@ -113,23 +143,23 @@ docker pull ghcr.io/yosebyte/boardcast:latest
 docker build -t boardcast .
 ```
 
-## 配置
+## ⚙️ 配置
 
-### 命令行参数
+### 🚀 命令行参数
 
 ```bash
 ./boardcast [选项]
 ```
 
-**可用选项：**
+**📝 可用选项：**
 
 | 参数 | 类型 | 默认值 | 描述 |
 |------|------|--------|------|
-| `--password` | string | 随机生成 | 访问密码 |
-| `--port` | string | `8200` | 服务器监听端口 |
-| `--version` | bool | `false` | 显示版本信息并退出 |
+| `--password` | string | 随机生成 | 🔐 访问密码 |
+| `--port` | string | `8200` | 🌐 服务器监听端口 |
+| `--version` | bool | `false` | ℹ️ 显示版本信息并退出 |
 
-**示例：**
+**💡 示例：**
 
 ```bash
 # 基本使用
@@ -142,9 +172,10 @@ docker build -t boardcast .
 ./boardcast --version
 ```
 
-## 部署
+## 🚢 部署
 
-### Docker Compose
+### 🐙 Docker Compose
+
 
 创建 `docker-compose.yml` 文件：
 
@@ -172,7 +203,7 @@ services:
 docker-compose up -d
 ```
 
-### Kubernetes
+### ☸️ Kubernetes
 
 创建 Kubernetes 部署文件：
 
@@ -218,9 +249,9 @@ spec:
   type: LoadBalancer
 ```
 
-### 反向代理
+### 🔄 反向代理
 
-#### Nginx
+#### 🌐 Nginx
 
 ```nginx
 server {
@@ -240,7 +271,7 @@ server {
 }
 ```
 
-#### Caddy
+#### 🕸️ Caddy
 
 ```caddyfile
 your-domain.com {
@@ -248,9 +279,9 @@ your-domain.com {
 }
 ```
 
-## 开发
+## 🛠️ 开发
 
-### 项目结构
+### 📁 项目结构
 
 ```
 boardcast/
@@ -278,38 +309,40 @@ boardcast/
 └── README.md              # 项目文档
 ```
 
-### 核心组件
+### 🧩 核心组件
 
-#### 1. 服务器 (`internal/server.go`)
+#### 1. 🌐 服务器 (`internal/server.go`)
 - HTTP 服务器配置和生命周期管理
 - 路由注册和中间件
 - 优雅关闭处理
 
-#### 2. 认证 (`internal/auth/`)
+#### 2. 🔐 认证 (`internal/auth/`)
 - 基于 bcrypt 的密码验证
 - Session 管理
 - 认证中间件
 
-#### 3. WebSocket 管理 (`internal/websocket/`)
+#### 3. 🔌 WebSocket 管理 (`internal/websocket/`)
 - 客户端连接管理
 - 实时消息广播
 - 内容同步
+- 快照保存和恢复功能
 
-#### 4. 处理器 (`internal/handler/`)
+#### 4. 🎯 处理器 (`internal/handler/`)
 - HTTP 路由处理
 - 请求验证和响应
 - 静态文件服务
+- 快照API端点处理
 
-### 技术栈
+### 🛠️ 技术栈
 
-- **后端**: Go 1.25+
-- **WebSocket**: Gorilla WebSocket
-- **认证**: Gorilla Sessions + bcrypt
-- **前端**: 原生 HTML/CSS/JavaScript
-- **容器化**: Docker + 多阶段构建
-- **CI/CD**: GitHub Actions
+- **🐹 后端**: Go 1.25+
+- **🔌 WebSocket**: Gorilla WebSocket
+- **🔐 认证**: Gorilla Sessions + bcrypt
+- **🎨 前端**: 原生 HTML/CSS/JavaScript
+- **🐳 容器化**: Docker + 多阶段构建
+- **🔄 CI/CD**: GitHub Actions
 
-### 开发环境设置
+### 💻 开发环境设置
 
 ```bash
 # 1. 克隆仓库
@@ -326,7 +359,7 @@ go run cmd/boardcast/main.go --password "dev-password"
 open http://localhost:8080
 ```
 
-### 构建
+### 🔨 构建
 
 ```bash
 # 本地构建
@@ -339,53 +372,20 @@ GOOS=linux GOARCH=amd64 go build -o boardcast-linux-amd64 ./cmd/boardcast
 docker build -t boardcast .
 ```
 
-## API 接口
+## 🌐 API 接口
 
-### 路由列表
+### 📋 路由列表
 
 | 路径 | 方法 | 描述 | 认证 |
 |------|------|------|------|
-| `/` | GET | 白板主页面 | 否 |
-| `/auth` | POST | 用户认证 | 否 |
-| `/logout` | POST | 用户登出 | 是 |
-| `/ws` | WebSocket | WebSocket 连接 | 是 |
-| `/content` | GET | 获取当前内容 | 是 |
+| `/` | GET | 🏠 白板主页面 | 否 |
+| `/auth` | POST | 🔐 用户认证 | 否 |
+| `/logout` | POST | 🚪 用户登出 | 是 |
+| `/ws` | WebSocket | 🔌 WebSocket 连接 | 是 |
+| `/content` | GET | 📄 获取当前内容 | 是 |
+| `/save` | POST | 💾 保存内容快照 | 是 |
+| `/restore` | POST | 🔄 恢复内容快照 | 是 |
 
-### 认证接口
-
-#### POST /auth
-认证用户身份
-
-**请求体：**
-```json
-{
-  "password": "your-password"
-}
-```
-
-**响应：**
-- `200 OK`: 认证成功
-- `400 Bad Request`: 请求格式错误
-- `401 Unauthorized`: 密码错误
-
-#### POST /logout
-用户登出
-
-**响应：**
-- `200 OK`: 登出成功
-
-### WebSocket 接口
-
-#### WebSocket /ws
-实时通信连接
-
-**连接要求：** 必须先通过 `/auth` 认证
-
-**消息格式：** 纯文本
-
-- **接收消息**: 其他用户的内容更新
-- **发送消息**: 当前用户的内容更新
-
-## 许可证
+## 📄 许可证
 
 本项目使用 [BSD 3-Clause License](LICENSE) 许可证

@@ -4,6 +4,7 @@ package websocket
 import (
 	"log"
 	"net/http"
+	"os"
 	"sync"
 	"time"
 
@@ -206,4 +207,49 @@ func (h *Hub) cleanupDeadConnections() {
 // Stop gracefully shuts down the hub.
 func (h *Hub) Stop() {
 	close(h.cleanup)
+}
+
+// SaveSnapshot saves the current content to a file.
+func (h *Hub) SaveSnapshot() error {
+	h.mu.RLock()
+	content := h.content
+	h.mu.RUnlock()
+
+	return os.WriteFile("boardcast.txt", []byte(content), 0644)
+}
+
+// LoadSnapshot loads content from the snapshot file.
+func (h *Hub) LoadSnapshot() (string, error) {
+	data, err := os.ReadFile("boardcast.txt")
+	if err != nil {
+		return "", err
+	}
+	return string(data), nil
+}
+
+// RestoreSnapshot restores content from snapshot file and updates the hub.
+func (h *Hub) RestoreSnapshot() error {
+	content, err := h.LoadSnapshot()
+	if err != nil {
+		return err
+	}
+
+	h.updateContent(content)
+
+	// Broadcast the restored content to all connected clients
+	h.mu.RLock()
+	clients := make([]*websocket.Conn, 0, len(h.clients))
+	for conn := range h.clients {
+		clients = append(clients, conn)
+	}
+	h.mu.RUnlock()
+
+	for _, conn := range clients {
+		if err := conn.WriteMessage(websocket.TextMessage, []byte(content)); err != nil {
+			log.Printf("Error writing restored content to WebSocket: %v", err)
+			h.removeClient(conn)
+		}
+	}
+
+	return nil
 }

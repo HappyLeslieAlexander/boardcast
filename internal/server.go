@@ -103,4 +103,6 @@ func (s *Server) registerRoutes() {
 	http.HandleFunc("/logout", s.handlers.HandleLogout)
 	http.HandleFunc("/ws", s.handlers.HandleWebSocket)
 	http.HandleFunc("/content", s.handlers.HandleContent)
+	http.HandleFunc("/save", s.handlers.HandleSave)
+	http.HandleFunc("/restore", s.handlers.HandleRestore)
 }
