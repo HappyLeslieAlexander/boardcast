@@ -21,19 +21,23 @@ BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发
 - 基于密码的访问控制
 - 会话管理和安全的 Cookie 存储
 - bcrypt 密码加密
+- 可选生成随机密码
 
 ### 🔄 实时协作
 - WebSocket 实时通信
 - 多用户同步编辑
+- 异常断线自动重连
 - 自动内容保存和恢复
 
 ### 📱 响应式设计
 - 适配桌面和移动设备
 - 简洁直观的用户界面
 - 现代化的设计风格
+- 支持暗色主题
 
 ### 🚀 轻量高效
-- 单一二进制文件部署
+- 单文件部署
+- 开箱即用
 - 低资源占用
 - 无数据库依赖
 
@@ -54,7 +58,7 @@ docker pull ghcr.io/yosebyte/boardcast:latest
 # 运行容器
 docker run -d \
   --name boardcast \
-  -p 8080:8080 \
+  -p 8200:8200 \
   ghcr.io/yosebyte/boardcast:latest \
   --password "your-secure-password"
 ```
@@ -70,7 +74,7 @@ tar -xzf boardcast-linux-amd64.tar.gz
 ./boardcast --password "your-secure-password"
 ```
 
-访问 `http://localhost:8080` 即可开始使用。
+访问 `http://localhost:8200` 即可开始使用。
 
 ## 安装
 
@@ -121,15 +125,15 @@ docker build -t boardcast .
 
 | 参数 | 类型 | 默认值 | 描述 |
 |------|------|--------|------|
-| `--password` | string | 无 | **必需** - 访问密码 |
-| `--port` | string | `8080` | 服务器监听端口 (1-65535) |
+| `--password` | string | 随机生成 | 访问密码 |
+| `--port` | string | `8200` | 服务器监听端口 |
 | `--version` | bool | `false` | 显示版本信息并退出 |
 
 **示例：**
 
 ```bash
 # 基本使用
-./boardcast --password "mypassword"
+./boardcast
 
 # 自定义端口
 ./boardcast --password "mypassword" --port 3000
@@ -137,10 +141,6 @@ docker build -t boardcast .
 # 查看版本
 ./boardcast --version
 ```
-
-### 环境变量
-
-目前版本仅支持命令行参数配置，未来版本将支持环境变量配置。
 
 ## 部署
 
@@ -156,11 +156,11 @@ services:
     image: ghcr.io/yosebyte/boardcast:latest
     container_name: boardcast
     ports:
-      - "8080:8080"
+      - "8200:8200"
     command: ["--password", "your-secure-password"]
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080"]
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8200"]
       interval: 30s
       timeout: 10s
       retries: 3
@@ -196,7 +196,7 @@ spec:
         image: ghcr.io/yosebyte/boardcast:latest
         args: ["--password", "your-secure-password"]
         ports:
-        - containerPort: 8080
+        - containerPort: 8200
         resources:
           requests:
             memory: "64Mi"
@@ -214,7 +214,7 @@ spec:
     app: boardcast
   ports:
   - port: 80
-    targetPort: 8080
+    targetPort: 8200
   type: LoadBalancer
 ```
 
@@ -228,7 +228,7 @@ server {
     server_name your-domain.com;
 
     location / {
-        proxy_pass http://localhost:8080;
+        proxy_pass http://localhost:8200;
         proxy_http_version 1.1;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
@@ -244,7 +244,7 @@ server {
 
 ```caddyfile
 your-domain.com {
-    reverse_proxy localhost:8080
+    reverse_proxy localhost:8200
 }
 ```
 
@@ -269,6 +269,8 @@ boardcast/
 │   └── websocket/         # WebSocket 管理
 │       └── hub.go         # WebSocket 连接管理器
 ├── .github/workflows/     # GitHub Actions 工作流
+│   ├── docker.yml         # Docker 镜像构建工作流
+│   └── release.yml        # 二进制包发布工作流
 ├── Dockerfile             # Docker 构建文件
 ├── .goreleaser.yml        # GoReleaser 配置
 ├── go.mod                 # Go 模块定义
@@ -337,20 +339,6 @@ GOOS=linux GOARCH=amd64 go build -o boardcast-linux-amd64 ./cmd/boardcast
 docker build -t boardcast .
 ```
 
-### 测试
-
-```bash
-# 运行测试
-go test ./...
-
-# 运行测试并显示覆盖率
-go test -cover ./...
-
-# 生成测试覆盖率报告
-go test -coverprofile=coverage.out ./...
-go tool cover -html=coverage.out
-```
-
 ## API 接口
 
 ### 路由列表
@@ -400,4 +388,4 @@ go tool cover -html=coverage.out
 
 ## 许可证
 
-本项目使用 [BSD 3-Clause License](LICENSE) 许可证。
+本项目使用 [BSD 3-Clause License](LICENSE) 许可证

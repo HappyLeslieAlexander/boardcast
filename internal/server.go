@@ -73,7 +73,7 @@ func (s *Server) Start() error {
 
 	// Start server in a goroutine
 	go func() {
-		log.Printf("Starting server on %s", s.server.Addr)
+		log.Printf("Server started: %s | Password: %s", s.server.Addr, s.config.Password)
 		if err := s.server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("Server failed to start: %v", err)
 		}
