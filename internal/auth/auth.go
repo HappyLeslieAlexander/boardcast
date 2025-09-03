@@ -2,6 +2,7 @@
 package auth
 
 import (
+	"crypto/rand"
 	"encoding/json"
 	"net/http"
 
@@ -12,7 +13,6 @@ import (
 const (
 	SessionName = "boardcast-session"
 	AuthKey     = "authenticated"
-	SecretKey   = "boardcast-secret-key"
 )
 
 // Manager handles authentication operations.
@@ -28,7 +28,12 @@ func NewManager(password string) (*Manager, error) {
 		return nil, err
 	}
 
-	store := sessions.NewCookieStore([]byte(SecretKey))
+	sessionKey := make([]byte, 32)
+	if _, err := rand.Read(sessionKey); err != nil {
+		return nil, err
+	}
+
+	store := sessions.NewCookieStore(sessionKey)
 
 	store.Options = &sessions.Options{
 		Path:     "/",
