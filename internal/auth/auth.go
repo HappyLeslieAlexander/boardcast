@@ -106,7 +106,8 @@ func (m *Manager) Logout(w http.ResponseWriter, r *http.Request) {
 func (m *Manager) setAuthStatus(w http.ResponseWriter, r *http.Request, authenticated bool) error {
 	session, err := m.store.Get(r, SessionName)
 	if err != nil {
-		return err
+		session = sessions.NewSession(m.store, SessionName)
+		session.IsNew = true
 	}
 
 	session.Values[AuthKey] = authenticated
