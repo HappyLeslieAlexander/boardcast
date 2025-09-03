@@ -22,7 +22,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 		#password.status-disconnected{background:rgba(255,107,129,.5)}
 		#password.status-connecting{background:rgba(255,193,7,.5)}
 		#password.status-connected{background:rgba(34,197,94,.5)}
-		#whiteboard,.placeholder{flex:1;width:100%;background:#fff;border:1px solid #ddd;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);transition:all .5s}
+		#whiteboard,.placeholder{flex:1;width:100%%;background:#fff;border:1px solid #ddd;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);transition:all .5s}
 		#whiteboard{padding:20px;font-size:16px;line-height:1.5;resize:none;font-family:inherit;display:none}
 		#whiteboard:focus{outline:none;border-color:#8fbffa;box-shadow:0 0 0 2px rgba(143,191,250,.2)}
 		.placeholder{display:flex;align-items:center;justify-content:center;color:#999}
@@ -75,8 +75,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 	<div class="placeholder" id="placeholder">Enter password to access BoardCast</div>
 	<textarea id="whiteboard"></textarea>
 	<footer style="text-align:center;font-size:10px;color:#999;margin-top:10px;margin-bottom:-10px;">
-		© 2025 Yosebyte. Licensed under BSD 3-Clause. 
-		<a href="https://github.com/yosebyte/boardcast" style="color:#999;text-decoration:none;">View on GitHub</a>
+		BoardCast %s | Licensed under BSD 3-Clause | <a href="https://github.com/yosebyte/boardcast" target="_blank" style="color:#999;text-decoration:none;">View on GitHub</a>
 	</footer>
 	<script>
 		const w=document.getElementById('whiteboard'),

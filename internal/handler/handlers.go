@@ -2,6 +2,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/yosebyte/boardcast/internal/auth"
@@ -11,22 +12,24 @@ import (
 
 // Handlers contains all HTTP handlers for the application.
 type Handlers struct {
-	auth  *auth.Manager
-	wsHub *websocket.Hub
+	auth    *auth.Manager
+	wsHub   *websocket.Hub
+	version string
 }
 
 // New creates a new Handlers instance.
-func New(authManager *auth.Manager, wsHub *websocket.Hub) *Handlers {
+func New(authManager *auth.Manager, wsHub *websocket.Hub, version string) *Handlers {
 	return &Handlers{
-		auth:  authManager,
-		wsHub: wsHub,
+		auth:    authManager,
+		wsHub:   wsHub,
+		version: version,
 	}
 }
 
 // ServeWhiteboard serves the main whiteboard page.
 func (h *Handlers) ServeWhiteboard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	w.Write([]byte(template.WhiteboardHTML))
+	fmt.Fprintf(w, template.WhiteboardHTML, h.version)
 }
 
 // HandleAuth handles authentication requests.

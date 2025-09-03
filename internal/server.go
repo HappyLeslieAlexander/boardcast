@@ -38,7 +38,7 @@ func NewServer(cfg *config.Config) (*Server, error) {
 	wsHub := websocket.NewHub()
 
 	// Initialize handlers
-	handlers := handler.New(authManager, wsHub)
+	handlers := handler.New(authManager, wsHub, cfg.Version)
 
 	// Create HTTP server
 	server := &http.Server{
