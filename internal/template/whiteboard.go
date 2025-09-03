@@ -103,7 +103,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 				if(!auth)return;
 				status('connecting');
 				s=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws');
-				s.onopen=()=>{status('connected');timer&&(clearTimeout(timer),timer=null)};
+				s.onopen=()=>{status('connected');timer&&(clearTimeout(timer),timer=null);fetch('/content',{credentials:'include'}).then(r=>r.text()).then(c=>w.value=c).catch(()=>{})};
 				s.onmessage=e=>{updating||(w.value=e.data,w.setSelectionRange(w.value.length,w.value.length))};
 				s.onclose=()=>{status('disconnected');auth&&!timer&&(timer=setTimeout(()=>{timer=null;connect()},3000))};
 				s.onerror=()=>status('disconnected');
