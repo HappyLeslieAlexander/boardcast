@@ -19,6 +19,12 @@
 
 BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发。它允许多个用户通过密码认证后在同一个白板上实时协作编辑文本内容。应用具有简洁的用户界面，支持 WebSocket 实时同步，内置快照功能可随时保存和恢复内容，是团队协作、会议记录、头脑风暴的理想工具。
 
+## 🎬 演示
+
+<div align="center">
+  <img src="https://cdn.yobc.de/assets/boardcast.gif" alt="BoardCast" width="800">
+</div>
+
 ## ✨ 特性
 
 ### 🔐 安全认证
