@@ -156,11 +156,11 @@ const WhiteboardHTML = `<!DOCTYPE html>
 	</script>
   <script>
     function updatePreview() {
-      var raw = document.getElementById('editor').value;
+      var raw = document.getElementById('whiteboard').value;
       var html = DOMPurify.sanitize(marked.parse(raw));
       document.getElementById('preview').innerHTML = html;
     }
-    document.getElementById('editor').addEventListener('input', updatePreview);
+    document.getElementById('whiteboard').addEventListener('input', updatePreview);
     window.addEventListener('load', updatePreview);
   </script>
 </body>
