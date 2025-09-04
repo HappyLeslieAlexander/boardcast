@@ -3,15 +3,13 @@
 </div>
 
 <div align="center">
-  <p><strong>实时协作白板 • 简单易用 • 开箱即用</strong></p>
+  <p><strong>轻量极简的实时协作文字白板</strong></p>
 </div>
 
 <div align="center">
   <a href="#✨-特性">特性</a> •
-  <a href="#🚀-上手">上手</a> •
   <a href="#📦-安装">安装</a> •
   <a href="#⚙️-配置">配置</a> •
-  <a href="#🚢-部署">部署</a> •
   <a href="#🛠️-开发">开发</a>
 </div>
 
@@ -22,7 +20,7 @@ BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发
 ## 🎬 演示
 
 <div align="center">
-  <img src="https://cdn.yobc.de/assets/boardcast.gif" alt="BoardCast" width="800">
+  <img src="https://cdn.yobc.de/assets/boardcast.gif" alt="BoardCast" width="1280">
 </div>
 
 ## ✨ 特性
@@ -63,55 +61,6 @@ BoardCast 是一个轻量级的实时协作白板应用，使用 Go 语言开发
 - 优雅关闭和错误处理
 - 结构化日志
 
-## 🚀 上手
-
-### 🐳 使用 Docker 部署
-
-```bash
-# 拉取镜像
-docker pull ghcr.io/yosebyte/boardcast:latest
-
-# 运行容器
-docker run -d \
-  --name boardcast \
-  -p 8200:8200 \
-  ghcr.io/yosebyte/boardcast:latest \
-  --password "your-secure-password"
-```
-
-### 📥 直接运行二进制文件
-
-```bash
-# 下载最新版本
-wget https://github.com/yosebyte/boardcast/releases/latest/download/boardcast-linux-amd64.tar.gz
-
-# 解压并运行
-tar -xzf boardcast-linux-amd64.tar.gz
-./boardcast --password "your-secure-password"
-```
-
-访问 `http://localhost:8200` 即可开始使用。
-
-### 📝 使用指南
-
-1. **🌐 访问应用**: 在浏览器中打开应用地址
-2. **🔑 身份认证**: 在密码框输入密码进行登录
-3. **✏️ 开始协作**: 在白板区域输入和编辑文本内容
-4. **💾 保存快照**: 点击保存按钮保存当前内容到本地文件
-5. **🔄 恢复快照**: 点击恢复按钮从快照文件恢复内容
-6. **🎨 主题切换**: 点击切换按钮切换明暗主题
-7. **🚪 断开连接**: 点击退出按钮登出并断开连接
-
-**📊 连接状态指示**：
-- **🔴 红色密码框**: 未连接状态，需要输入密码进行认证
-- **🟡 黄色密码框**: 连接中状态，正在建立WebSocket连接
-- **🟢 绿色密码框**: 已连接状态，可以正常进行实时协作
-
-**📸 快照功能说明**：
-- 快照文件保存为 `boardcast.txt`，位于应用运行目录
-- 保存快照会覆盖之前的快照文件
-- 恢复快照会将内容同步到所有在线用户
-
 ## 📦 安装
 
 ### 📋 二进制发布版本
@@ -149,6 +98,26 @@ docker pull ghcr.io/yosebyte/boardcast:latest
 docker build -t boardcast .
 ```
 
+### 📝 使用指南
+
+1. **🌐 访问应用**: 在浏览器中打开应用地址
+2. **🔑 身份认证**: 在密码框输入密码进行登录
+3. **✏️ 开始协作**: 在白板区域输入和编辑文本内容
+4. **💾 保存快照**: 点击保存按钮保存当前内容到本地文件
+5. **🔄 恢复快照**: 点击恢复按钮从快照文件恢复内容
+6. **🎨 主题切换**: 点击切换按钮切换明暗主题
+7. **🚪 断开连接**: 点击退出按钮登出并断开连接
+
+**📊 连接状态指示**：
+- **🔴 红色密码框**: 未连接状态，需要输入密码进行认证
+- **🟡 黄色密码框**: 连接中状态，正在建立WebSocket连接
+- **🟢 绿色密码框**: 已连接状态，可以正常进行实时协作
+
+**📸 快照功能说明**：
+- 快照文件保存为 `boardcast.txt`，位于应用运行目录
+- 保存快照会覆盖之前的快照文件
+- 恢复快照会将内容同步到所有在线用户
+
 ## ⚙️ 配置
 
 ### 🚀 命令行参数
@@ -168,121 +137,14 @@ docker build -t boardcast .
 **💡 示例：**
 
 ```bash
-# 基本使用
+# 使用随机密码
 ./boardcast
 
-# 自定义端口
-./boardcast --password "mypassword" --port 3000
+# 自定义密码和端口
+./boardcast --password "secret" --port 3000
 
 # 查看版本
 ./boardcast --version
-```
-
-## 🚢 部署
-
-### 🐙 Docker Compose
-
-
-创建 `docker-compose.yml` 文件：
-
-```yaml
-version: '3.8'
-
-services:
-  boardcast:
-    image: ghcr.io/yosebyte/boardcast:latest
-    container_name: boardcast
-    ports:
-      - "8200:8200"
-    command: ["--password", "your-secure-password"]
-    restart: unless-stopped
-    healthcheck:
-      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8200"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-```
-
-运行：
-
-```bash
-docker-compose up -d
-```
-
-### ☸️ Kubernetes
-
-创建 Kubernetes 部署文件：
-
-```yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: boardcast
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: boardcast
-  template:
-    metadata:
-      labels:
-        app: boardcast
-    spec:
-      containers:
-      - name: boardcast
-        image: ghcr.io/yosebyte/boardcast:latest
-        args: ["--password", "your-secure-password"]
-        ports:
-        - containerPort: 8200
-        resources:
-          requests:
-            memory: "64Mi"
-            cpu: "50m"
-          limits:
-            memory: "128Mi"
-            cpu: "100m"
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: boardcast-service
-spec:
-  selector:
-    app: boardcast
-  ports:
-  - port: 80
-    targetPort: 8200
-  type: LoadBalancer
-```
-
-### 🔄 反向代理
-
-#### 🌐 Nginx
-
-```nginx
-server {
-    listen 80;
-    server_name your-domain.com;
-
-    location / {
-        proxy_pass http://localhost:8200;
-        proxy_http_version 1.1;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-}
-```
-
-#### 🕸️ Caddy
-
-```caddyfile
-your-domain.com {
-    reverse_proxy localhost:8200
-}
 ```
 
 ## 🛠️ 开发
@@ -362,7 +224,7 @@ go mod download
 go run cmd/boardcast/main.go --password "dev-password"
 
 # 4. 访问应用
-open http://localhost:8080
+open http://localhost:8200
 ```
 
 ### 🔨 构建
@@ -379,8 +241,6 @@ docker build -t boardcast .
 ```
 
 ## 🌐 API 接口
-
-### 📋 路由列表
 
 | 路径 | 方法 | 描述 | 认证 |
 |------|------|------|------|
