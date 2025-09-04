@@ -1,266 +1,167 @@
+// Package template provides HTML templates for the boardcast application.
 package template
 
-// WhiteboardHTML 是返回给客户端的 HTML 模板。
-// 注意：本文件做了最小侵入性的改动，加入 Markdown 预览功能 (marked + DOMPurify)。
-// 保存/恢复/实时同步逻辑保持不变：仍然使用 /save /restore /ws /content 等后端接口。
-const WhiteboardHTML = `<!doctype html>
-<html lang="zh-CN">
+// WhiteboardHTML contains the complete HTML template for the whiteboard interface.
+const WhiteboardHTML = `<!DOCTYPE html>
+<html>
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>BoardCast — 文字白板（支持 Markdown Preview）</title>
-  <style>
-    /* 简洁的样式：不改变原有布局（若你的项目已有样式，请保留） */
-    html,body { height:100%; margin:0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial; }
-    .app { display:flex; flex-direction:column; height:100vh; }
-    header { padding:10px; display:flex; gap:8px; align-items:center; background:#f8f9fa; border-bottom:1px solid #e5e5e5; }
-    header .title { font-weight:600; font-size:18px; }
-    main { flex:1; display:flex; gap:8px; padding:12px; box-sizing:border-box; }
-    /* editor / preview 列布局 */
-    .pane { flex:1; display:flex; flex-direction:column; min-width:0; }
-    textarea#editor { flex:1; width:100%; resize:none; padding:12px; box-sizing:border-box; font-family: monospace; font-size:14px; line-height:1.5; border:1px solid #ddd; border-radius:6px; }
-    .preview { flex:1; overflow:auto; padding:12px; border:1px solid #ddd; border-radius:6px; background:#fff; }
-    .controls { display:flex; gap:8px; }
-    .small { padding:6px 10px; font-size:13px; }
-    /* Markdown preview rendered elements */
-    .preview h1, .preview h2, .preview h3 { margin:12px 0 6px; }
-    .preview p { margin:8px 0; }
-    .bottom-bar { padding:8px 12px; border-top:1px solid #eee; background:#fafafa; }
-    .muted { color:#666; font-size:13px; }
-    @media (max-width:900px) {
-      main { flex-direction:column; }
-      .pane { min-height:150px; }
-    }
-  </style>
+	<title>BoardCast</title>
+	<meta name="viewport" content="width=device-width,initial-scale=1">
+	<style>
+		*{box-sizing:border-box}
+		body{margin:0;padding:10px;height:100vh;display:flex;flex-direction:column;font-family:system-ui,sans-serif;background:#f5f5f5;transition:all .5s}
+		.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
+		.logo{display:flex;align-items:center;gap:10px}
+		.logo-text-1{font-size:18px;font-weight:600;color:#8fbffa;margin-right:-10px}
+		.logo-text-2{font-size:18px;font-weight:600;color:#2859c5}
+		.auth-form{display:flex;align-items:center;gap:10px}
+		.btn{width:32px;height:32px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border:1px solid #ddd;transition:all .5s}
+		.btn:hover{background:#e0e0e0}
+		.btn.disabled{background:#ccc;cursor:not-allowed;opacity:0.5}
+		.btn svg{width:16px;height:16px;fill:#666}
+		#password{width:64px;padding:8px;border:1px solid #ddd;border-radius:4px;background:#f0f0f0;transition:all .5s}
+		#password.status-disconnected{background:rgba(255,107,129,.5)}
+		#password.status-connecting{background:rgba(255,193,7,.5)}
+		#password.status-connected{background:rgba(34,197,94,.5)}
+		#whiteboard,.placeholder{flex:1;width:100%%;background:#fff;border:1px solid #ddd;border-radius:4px;box-shadow:0 1px 3px rgba(0,0,0,.1);transition:all .5s}
+		#whiteboard{padding:20px;font-size:16px;line-height:1.5;resize:none;font-family:inherit;display:none}
+		#whiteboard:focus{outline:none;border-color:#8fbffa;box-shadow:0 0 0 2px rgba(143,191,250,.2)}
+		.placeholder{display:flex;align-items:center;justify-content:center;color:#999}
+		body.dark{background:#1a1a1a}
+		body.dark #whiteboard,body.dark .placeholder{background:#2d2d2d;border-color:#444;color:#e0e0e0}
+		body.dark .placeholder{color:#999}
+		body.dark #password{background:#2d2d2d;border-color:#444;color:#e0e0e0}
+		body.dark #password.status-disconnected{background:rgba(255,107,129,.5)}
+		body.dark #password.status-connecting{background:rgba(255,193,7,.5)}
+		body.dark #password.status-connected{background:rgba(34,197,94,.5)}
+		body.dark .btn{background:#3d3d3d;border-color:#555}
+		body.dark .btn:hover{background:#4d4d4d}
+		body.dark .btn svg{fill:#ccc}
+		@media(max-width:768px){body{padding:10px}#whiteboard{padding:15px}}
+	</style>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
 <body>
-  <div class="app">
-    <header>
-      <div class="title">BoardCast — 文字白板</div>
-      <div class="controls" style="margin-left:auto;">
-        <button id="togglePreviewBtn" class="small">显示 Markdown 预览</button>
-        <button id="saveBtn" class="small">保存快照</button>
-        <button id="restoreBtn" class="small">恢复快照</button>
-        <button id="logoutBtn" class="small">退出</button>
-      </div>
-    </header>
+	<div class="header">
+		<div class="logo">
+			<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 14 14">
+				<path fill="#8fbffa" d="M.58 1.961A1.92 1.92 0 0 1 1.937 1.4H12.06a1.92 1.92 0 0 1 1.92 1.92v7.362a1.92 1.92 0 0 1-1.92 1.92H6.995A6.283 6.283 0 0 0 .017 5.524V3.32c0-.51.202-.998.563-1.358Z"/>
+				<path fill="#2859c5" d="M.768 6.73a.75.75 0 1 0 0 1.5a3.533 3.533 0 0 1 3.533 3.532a.75.75 0 0 0 1.5 0A5.033 5.033 0 0 0 .768 6.73m0 2.676a.75.75 0 0 0 0 1.5a.856.856 0 0 1 .856.856a.75.75 0 1 0 1.5 0A2.356 2.356 0 0 0 .768 9.406"/>
+			</svg>
+			<span class="logo-text-1">Board</span><span class="logo-text-2">Cast</span>
+		</div>
+		<div class="auth-form">
+			<input type="password" id="password">
+			<button class="btn" id="authBtn">
+				<svg viewBox="0 0 24 24">
+					<path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+				</svg>
+			</button>
+			<button class="btn" id="saveBtn">
+				<svg viewBox="0 0 24 24">
+					<path d="M17 3H5c-1.11 0-2 .9-2 2v14c0 1.1.89 2 2 2h14c1.1 0 2-.9 2-2V7l-4-4zm-5 16c-1.66 0-3-1.34-3-3s1.34-3 3-3 3 1.34 3 3-1.34 3-3 3zm3-10H5V5h10v4z"/>
+				</svg>
+			</button>
+			<button class="btn" id="restoreBtn">
+				<svg viewBox="0 0 24 24">
+					<path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/>
+				</svg>
+			</button>
+			<button class="btn" id="themeBtn">
+				<svg viewBox="0 0 24 24">
+					<path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/>
+				</svg>
+			</button>
+		</div>
+	</div>
+	<div class="placeholder" id="placeholder">Enter password to access BoardCast</div>
+	<textarea id="whiteboard"></textarea>
+    <div id="preview" style="border:1px solid #ccc; padding:10px; margin-top:10px; overflow:auto; height:300px;"></div>
+	<footer style="text-align:center;font-size:10px;color:#999;margin-top:8px">
+		BoardCast %s | Licensed under BSD 3-Clause | <a href="https://github.com/yosebyte/boardcast" target="_blank" style="color:#999;text-decoration:none;">View on GitHub</a>
+	</footer>
+	<script>
+		const w=document.getElementById('whiteboard'),
+			p=document.getElementById('password'),
+			a=document.getElementById('authBtn'),
+			h=document.getElementById('placeholder'),
+			t=document.getElementById('themeBtn'),
+			sb=document.getElementById('saveBtn'),
+			rb=document.getElementById('restoreBtn');
+		
+		let s=null,auth=false,updating=false,timer=null;
+		
+		const status=st=>p.className='status-'+st,
+			icons={
+				connect:'M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z',
+				disconnect:'M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm5 13.59L15.59 17 12 13.41 8.41 17 7 15.59 10.59 12 7 8.41 8.41 7 12 10.59 15.59 7 17 8.41 13.41 12 17 15.59z',
+				light:'M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5zM2 13h2c.55 0 1-.45 1-1s-.45-1-1-1H2c-.55 0-1 .45-1 1s.45 1 1 1zm18 0h2c.55 0 1-.45 1-1s-.45-1-1-1h-2c-.55 0-1 .45-1 1s.45 1 1 1zM11 2v2c0 .55.45 1 1 1s1-.45 1-1V2c0-.55-.45-1-1-1s-1 .45-1 1zm0 18v2c0 .55.45 1 1 1s1-.45 1-1v-2c0-.55-.45-1-1-1s-1 .45-1 1z',
+				dark:'M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z'
+			},
+			icon=()=>t.querySelector('path').setAttribute('d',document.body.classList.contains('dark')?icons.light:icons.dark),
+			load=()=>{localStorage.getItem('theme')==='dark'&&document.body.classList.add('dark');icon()},
+			save=()=>localStorage.setItem('theme',document.body.classList.contains('dark')?'dark':'light'),
+			
+			updateButtons=()=>{
+				const canConnect=auth||p.value.trim();
+				sb.disabled=!auth;rb.disabled=!auth;a.disabled=!canConnect;
+				sb.classList.toggle('disabled',!auth);rb.classList.toggle('disabled',!auth);a.classList.toggle('disabled',!canConnect)
+			},
 
-    <main>
-      <section class="pane" aria-label="editor-pane">
-        <label class="muted">编辑（文本/Markdown）</label>
-        <textarea id="editor" placeholder="在这里输入文本或 Markdown..." aria-label="editor"></textarea>
-        <div class="bottom-bar muted">保存的内容仍为纯文本（如果你输入 Markdown，它会被原样保存）。</div>
-      </section>
-
-      <section class="pane" aria-label="preview-pane">
-        <label class="muted">渲染预览</label>
-        <!-- preview 区域，初始隐藏提示 -->
-        <div id="preview" class="preview" aria-live="polite">切换“显示 Markdown 预览”以查看渲染结果。</div>
-      </section>
-    </main>
-  </div>
-
-  <!-- 外部库：marked（Markdown -> HTML），DOMPurify（HTML 消毒）-->
-  <!-- CDN：若需要离线托管，请将脚本放到静态目录并修改引用路径 -->
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js" integrity="" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/dompurify/dist/purify.min.js" integrity="" crossorigin="anonymous"></script>
-
+			connect=()=>{
+				if(!auth)return;
+				status('connecting');
+				s=new WebSocket((location.protocol==='https:'?'wss:':'ws:')+'//'+location.host+'/ws');
+				s.onopen=()=>{status('connected');timer&&(clearTimeout(timer),timer=null);fetch('/content',{credentials:'include'}).then(r=>r.text()).then(c=>w.value=c).catch(()=>{})};
+				s.onmessage=e=>{updating||(w.value=e.data,w.setSelectionRange(w.value.length,w.value.length))};
+				s.onclose=()=>{status('disconnected');auth&&!timer&&(timer=setTimeout(()=>{timer=null;connect()},3000))};
+				s.onerror=()=>status('disconnected');
+				w.oninput=()=>{s?.readyState===1&&(updating=true,s.send(w.value),setTimeout(()=>updating=false,50))}
+			},
+			
+			authenticate=()=>fetch('/auth',{
+				method:'POST',headers:{'Content-Type':'application/json'},credentials:'include',
+				body:JSON.stringify({password:p.value})
+			}).then(r=>r.ok?r.text():Promise.reject()).then(()=>{
+				auth=true;p.disabled=true;p.value='';w.style.display='block';h.style.display='none';
+				a.querySelector('path').setAttribute('d',icons.disconnect);
+				fetch('/content',{credentials:'include'}).then(r=>r.text()).then(c=>w.value=c);
+				connect();updateButtons()
+			}).catch(()=>{p.value='';updateButtons()}),
+			
+			disconnect=()=>fetch('/logout',{method:'POST',credentials:'include'}).finally(()=>{
+				timer&&(clearTimeout(timer),timer=null);s?.close();auth=false;p.value='';p.disabled=false;
+				w.style.display='none';h.style.display='flex';w.value='';
+				a.querySelector('path').setAttribute('d',icons.connect);status('disconnected');updateButtons()
+			}),
+			
+			init=()=>fetch('/content',{credentials:'include'}).then(r=>{
+				if(r.ok)return r.text();throw new Error('Not authenticated')
+			}).then(c=>{
+				auth=true;p.disabled=true;p.value='';w.style.display='block';h.style.display='none';
+				a.querySelector('path').setAttribute('d',icons.disconnect);w.value=c;connect();updateButtons()
+			}).catch(()=>{status('disconnected');updateButtons()}),
+			
+			snap=(u)=>auth&&fetch(u,{method:'POST',credentials:'include'}).catch(()=>{});
+		
+		load();
+		t.onclick=()=>{document.body.classList.toggle('dark');icon();save()};
+		a.onclick=()=>auth?disconnect():authenticate();
+		sb.onclick=()=>snap('/save');
+		rb.onclick=()=>snap('/restore');
+		p.addEventListener('keypress',e=>e.key==='Enter'&&a.click());
+		p.addEventListener('input',updateButtons);
+		init()
+	</script>
   <script>
-  (function(){
-    'use strict';
-
-    // DOM 元素
-    const editor = document.getElementById('editor');
-    const preview = document.getElementById('preview');
-    const togglePreviewBtn = document.getElementById('togglePreviewBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const restoreBtn = document.getElementById('restoreBtn');
-    const logoutBtn = document.getElementById('logoutBtn');
-
-    // 预览状态：false -> 编辑，true -> 显示渲染
-    let previewEnabled = false;
-
-    // 初始化：从后端获取当前内容（如果后端已有 /content）
-    async function loadContentOnce() {
-      try {
-        const resp = await fetch('/content', { credentials: 'same-origin' });
-        if (resp.ok) {
-          const text = await resp.text();
-          editor.value = text || '';
-          renderPreviewIfNeeded();
-        } else {
-          console.warn('/content 返回非 200 状态', resp.status);
-        }
-      } catch (err) {
-        console.warn('加载初始内容失败：', err);
-      }
+    function updatePreview() {
+      var raw = document.getElementById('editor').value;
+      var html = DOMPurify.sanitize(marked.parse(raw));
+      document.getElementById('preview').innerHTML = html;
     }
-
-    // WebSocket 连接与消息处理（尽量兼容原实现的消息格式）
-    function setupWebSocket() {
-      try {
-        const scheme = (location.protocol === 'https:') ? 'wss' : 'ws';
-        const wsUrl = scheme + '://' + location.host + '/ws';
-        const ws = new WebSocket(wsUrl);
-
-        ws.addEventListener('open', () => {
-          console.info('WebSocket 已连接');
-        });
-
-        ws.addEventListener('message', (ev) => {
-          // 假设消息为纯文本（最新全文）或 JSON {type, payload}
-          try {
-            let data = ev.data;
-            // 如果是 JSON 格式并包含 payload.text，则采用其 text
-            try {
-              const parsed = JSON.parse(data);
-              if (parsed && typeof parsed.payload === 'string') {
-                data = parsed.payload;
-              } else if (parsed && parsed.payload && typeof parsed.payload.text === 'string') {
-                data = parsed.payload.text;
-              }
-            } catch (_) {
-              // not json, keep raw
-            }
-            // 将接收到的文本放回 editor（保持行为和原项目一致：接收远端更新直接覆盖本地）
-            const cur = editor.value;
-            if (cur !== data) {
-              editor.value = data;
-              renderPreviewIfNeeded();
-            }
-          } catch (err) {
-            console.error('处理 WebSocket 消息时出错：', err);
-          }
-        });
-
-        ws.addEventListener('close', () => {
-          console.info('WebSocket 断开，稍后重试连接');
-          // 简单的自动重连策略（指数退避可另行增强）
-          setTimeout(setupWebSocket, 2000);
-        });
-
-        ws.addEventListener('error', (e) => {
-          console.warn('WebSocket 错误', e);
-          ws.close();
-        });
-      } catch (err) {
-        console.error('无法建立 WebSocket：', err);
-      }
-    }
-
-    // 渲染预览（仅当 previewEnabled 为 true）
-    function renderPreviewIfNeeded() {
-      if (!previewEnabled) return;
-      try {
-        // marked -> HTML，再用 DOMPurify 清洗 -> 注入
-        const raw = editor.value || '';
-        // marked.parse for marked >=4, fallback to marked() for older
-        const html = (typeof marked.parse === 'function') ? marked.parse(raw) : marked(raw);
-        const clean = DOMPurify.sanitize(html);
-        preview.innerHTML = clean;
-      } catch (err) {
-        preview.innerText = '渲染失败：' + err.message;
-      }
-    }
-
-    // 切换预览按钮行为
-    togglePreviewBtn.addEventListener('click', () => {
-      previewEnabled = !previewEnabled;
-      if (previewEnabled) {
-        togglePreviewBtn.innerText = '隐藏 Markdown 预览';
-        renderPreviewIfNeeded();
-      } else {
-        togglePreviewBtn.innerText = '显示 Markdown 预览';
-        preview.innerText = '切换“显示 Markdown 预览”以查看渲染结果。';
-      }
-      // 为了无缝切换，不改变编辑区内容或焦点（用户体验优化）
-    });
-
-    // 编辑器输入时实时更新预览（防抖）
-    let renderTimer = null;
-    editor.addEventListener('input', () => {
-      if (renderTimer) clearTimeout(renderTimer);
-      renderTimer = setTimeout(() => {
-        renderPreviewIfNeeded();
-        renderTimer = null;
-      }, 150); // 150ms 防抖
-    });
-
-    // 保存按钮：POST 到 /save（发送纯文本 body）
-    saveBtn.addEventListener('click', async () => {
-      try {
-        saveBtn.disabled = true;
-        const resp = await fetch('/save', {
-          method: 'POST',
-          credentials: 'same-origin',
-          headers: { 'Content-Type': 'text/plain; charset=utf-8' },
-          body: editor.value
-        });
-        if (!resp.ok) {
-          alert('保存失败：' + resp.statusText);
-        } else {
-          // 若后端返回信息，可显示提示（保持兼容）
-          // const txt = await resp.text();
-          // console.info('保存结果', txt);
-        }
-      } catch (err) {
-        alert('保存时出错：' + err.message);
-      } finally {
-        saveBtn.disabled = false;
-      }
-    });
-
-    // 恢复按钮：POST /restore （后端会广播恢复后的内容）
-    restoreBtn.addEventListener('click', async () => {
-      if (!confirm('确定要从快照恢复？当前编辑器内容将被覆盖。')) return;
-      try {
-        restoreBtn.disabled = true;
-        const resp = await fetch('/restore', {
-          method: 'POST',
-          credentials: 'same-origin'
-        });
-        if (!resp.ok) {
-          alert('恢复失败：' + resp.statusText);
-        } else {
-          // 恢复成功后，后端应该会通过 WebSocket 广播新内容；但仍尝试获取 /content 以立即更新
-          setTimeout(loadContentOnce, 300);
-        }
-      } catch (err) {
-        alert('恢复时出错：' + err.message);
-      } finally {
-        restoreBtn.disabled = false;
-      }
-    });
-
-    // 退出按钮：调用 /logout POST
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        const resp = await fetch('/logout', {
-          method: 'POST',
-          credentials: 'same-origin'
-        });
-        // 尝试跳回登录页（或根路径）
-        location.reload();
-      } catch (err) {
-        console.warn('注销失败', err);
-        location.reload();
-      }
-    });
-
-    // 页面加载 -> 初始化内容 + websocket
-    document.addEventListener('DOMContentLoaded', () => {
-      loadContentOnce();
-      setupWebSocket();
-    });
-
-    // 安全提示：若浏览器未加载 marked 或 DOMPurify，禁用预览
-    if (typeof marked === 'undefined' || typeof DOMPurify === 'undefined') {
-      togglePreviewBtn.disabled = true;
-      togglePreviewBtn.title = '无法加载 Markdown 渲染库（marked / DOMPurify）。';
-      console.warn('marked 或 DOMPurify 未加载，Markdown 预览不可用。');
-    }
-  })();
+    document.getElementById('editor').addEventListener('input', updatePreview);
+    window.addEventListener('load', updatePreview);
   </script>
 </body>
-</html>
-`
+</html>`
