@@ -9,7 +9,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<style>
 		*{box-sizing:border-box}
-		body{margin:0;padding:20px;height:100vh;display:flex;flex-direction:column;font-family:system-ui,sans-serif;background:#f5f5f5;transition:all .5s}
+		body{margin:0;padding:10px;height:100vh;display:flex;flex-direction:column;font-family:system-ui,sans-serif;background:#f5f5f5;transition:all .5s}
 		.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
 		.logo{display:flex;align-items:center;gap:10px}
 		.logo-text-1{font-size:18px;font-weight:600;color:#8fbffa;margin-right:-10px}
@@ -17,6 +17,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 		.auth-form{display:flex;align-items:center;gap:10px}
 		.btn{width:32px;height:32px;border-radius:4px;cursor:pointer;display:flex;align-items:center;justify-content:center;background:#f0f0f0;border:1px solid #ddd;transition:all .5s}
 		.btn:hover{background:#e0e0e0}
+		.btn.disabled{background:#ccc;cursor:not-allowed;opacity:0.5}
 		.btn svg{width:16px;height:16px;fill:#666}
 		#password{width:64px;padding:8px;border:1px solid #ddd;border-radius:4px;background:#f0f0f0;transition:all .5s}
 		#password.status-disconnected{background:rgba(255,107,129,.5)}
@@ -67,14 +68,14 @@ const WhiteboardHTML = `<!DOCTYPE html>
 			</button>
 			<button class="btn" id="themeBtn">
 				<svg viewBox="0 0 24 24">
-					<path d="M12 7c-2.76 0-5 2.24-5 5s2.24 5 5 5 5-2.24 5-5-2.24-5-5-5z"/>
+					<path d="M9 2c-1.05 0-2.05.16-3 .46 4.06 1.27 7 5.06 7 9.54 0 4.48-2.94 8.27-7 9.54.95.3 1.95.46 3 .46 5.52 0 10-4.48 10-10S14.52 2 9 2z"/>
 				</svg>
 			</button>
 		</div>
 	</div>
 	<div class="placeholder" id="placeholder">Enter password to access BoardCast</div>
 	<textarea id="whiteboard"></textarea>
-	<footer style="text-align:center;font-size:10px;color:#999;margin-top:10px;margin-bottom:-10px;">
+	<footer style="text-align:center;font-size:10px;color:#999;margin-top:8px">
 		BoardCast %s | Licensed under BSD 3-Clause | <a href="https://github.com/yosebyte/boardcast" target="_blank" style="color:#999;text-decoration:none;">View on GitHub</a>
 	</footer>
 	<script>
@@ -99,6 +100,12 @@ const WhiteboardHTML = `<!DOCTYPE html>
 			load=()=>{localStorage.getItem('theme')==='dark'&&document.body.classList.add('dark');icon()},
 			save=()=>localStorage.setItem('theme',document.body.classList.contains('dark')?'dark':'light'),
 			
+			updateButtons=()=>{
+				const canConnect=auth||p.value.trim();
+				sb.disabled=!auth;rb.disabled=!auth;a.disabled=!canConnect;
+				sb.classList.toggle('disabled',!auth);rb.classList.toggle('disabled',!auth);a.classList.toggle('disabled',!canConnect)
+			},
+
 			connect=()=>{
 				if(!auth)return;
 				status('connecting');
@@ -117,21 +124,21 @@ const WhiteboardHTML = `<!DOCTYPE html>
 				auth=true;p.disabled=true;p.value='';w.style.display='block';h.style.display='none';
 				a.querySelector('path').setAttribute('d',icons.disconnect);
 				fetch('/content',{credentials:'include'}).then(r=>r.text()).then(c=>w.value=c);
-				connect()
-			}).catch(()=>p.value=''),
+				connect();updateButtons()
+			}).catch(()=>{p.value='';updateButtons()}),
 			
 			disconnect=()=>fetch('/logout',{method:'POST',credentials:'include'}).finally(()=>{
 				timer&&(clearTimeout(timer),timer=null);s?.close();auth=false;p.value='';p.disabled=false;
 				w.style.display='none';h.style.display='flex';w.value='';
-				a.querySelector('path').setAttribute('d',icons.connect);status('disconnected')
+				a.querySelector('path').setAttribute('d',icons.connect);status('disconnected');updateButtons()
 			}),
 			
 			init=()=>fetch('/content',{credentials:'include'}).then(r=>{
 				if(r.ok)return r.text();throw new Error('Not authenticated')
 			}).then(c=>{
 				auth=true;p.disabled=true;p.value='';w.style.display='block';h.style.display='none';
-				a.querySelector('path').setAttribute('d',icons.disconnect);w.value=c;connect()
-			}).catch(()=>status('disconnected')),
+				a.querySelector('path').setAttribute('d',icons.disconnect);w.value=c;connect();updateButtons()
+			}).catch(()=>{status('disconnected');updateButtons()}),
 			
 			snap=(u)=>auth&&fetch(u,{method:'POST',credentials:'include'}).catch(()=>{});
 		
@@ -141,6 +148,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 		sb.onclick=()=>snap('/save');
 		rb.onclick=()=>snap('/restore');
 		p.addEventListener('keypress',e=>e.key==='Enter'&&a.click());
+		p.addEventListener('input',updateButtons);
 		init()
 	</script>
 </body>
