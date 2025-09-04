@@ -263,3 +263,4 @@ const WhiteboardHTML = `<!doctype html>
   </script>
 </body>
 </html>
+`
