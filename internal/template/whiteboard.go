@@ -38,7 +38,25 @@ const WhiteboardHTML = `<!DOCTYPE html>
 		body.dark .btn:hover{background:#4d4d4d}
 		body.dark .btn svg{fill:#ccc}
 		@media(max-width:768px){body{padding:10px}#whiteboard{padding:15px}}
-	</style>
+	
+/* --- Added styles for markdown preview placeholder, dark mode, responsive and draggable divider --- */
+.editor-container{display:flex;flex-direction:column;height:60vh;min-height:300px;border-radius:8px;overflow:hidden}
+#whiteboard{flex:1;min-height:120px;padding:10px;font-family:inherit;border:1px solid #ddd;border-bottom:none;resize:none;background:transparent}
+#divider{height:8px;cursor:row-resize;display:block;background:linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.12));align-items:center;justify-content:center}
+#divider .bar{width:60px;height:4px;border-radius:3px;margin:2px auto;opacity:.6}
+.preview-wrapper{flex:1;overflow:auto;border:1px solid #ddd;padding:10px;background:var(--preview-bg,#fff);color:var(--preview-color,#111);min-height:80px}
+.preview-placeholder{opacity:0.6;font-style:italic;color:var(--placeholder-color,#666)}
+/* dark mode */
+body.dark{background:#111;color:#eee}
+body.dark .header{background:transparent}
+body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placeholder-color:#bbb;border-color:#333}
+/* mobile tweaks */
+@media (max-width:768px){
+  .editor-container{height:50vh}
+  #whiteboard{font-size:14px;padding:8px}
+  .preview-wrapper{font-size:14px;padding:8px}
+}
+</style>
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
@@ -76,8 +94,11 @@ const WhiteboardHTML = `<!DOCTYPE html>
 		</div>
 	</div>
 	<div class="placeholder" id="placeholder">Enter password to access BoardCast</div>
-	<textarea id="whiteboard"></textarea>
-    <div id="preview" style="border:1px solid #ccc; padding:10px; margin-top:10px; overflow:auto; height:300px;"></div>
+	<div class="editor-container">
+    <textarea id="whiteboard" placeholder="Start typing markdown here..."></textarea>
+    <div id="divider"><div class="bar"></div></div>
+    <div id="preview" class="preview-wrapper"><div id="preview-inner"></div></div>
+  </div>
 	<footer style="text-align:center;font-size:10px;color:#999;margin-top:8px">
 		BoardCast %s | Licensed under BSD 3-Clause | <a href="https://github.com/yosebyte/boardcast" target="_blank" style="color:#999;text-decoration:none;">View on GitHub</a>
 	</footer>
@@ -156,12 +177,50 @@ const WhiteboardHTML = `<!DOCTYPE html>
 	</script>
   <script>
     function updatePreview() {
-      var raw = document.getElementById('whiteboard').value;
-      var html = DOMPurify.sanitize(marked.parse(raw));
-      document.getElementById('preview').innerHTML = html;
+      var raw = document.getElementById('whiteboard').value || '';
+      var html = raw.trim() ? DOMPurify.sanitize(marked.parse(raw)) : '';
+      var inner = document.getElementById('preview-inner');
+      if(raw.trim()==='') {
+        inner.innerHTML = '<div class="preview-placeholder">预览区：暂无内容 — 开始输入 Markdown 或粘贴文本以查看渲染结果。</div>';
+      } else {
+        inner.innerHTML = html;
+      }
     }
     document.getElementById('whiteboard').addEventListener('input', updatePreview);
     window.addEventListener('load', updatePreview);
   </script>
+<script>
+// Divider drag to resize editor and preview (non-invasive)
+(function(){
+  var divider = document.getElementById('divider');
+  var editor = document.getElementById('whiteboard');
+  var preview = document.getElementById('preview');
+  if(!divider||!editor||!preview) return;
+  var dragging = false;
+  var startY, startEditorH, startPreviewH;
+  divider.addEventListener('mousedown', function(e){
+    dragging = true;
+    startY = e.clientY;
+    startEditorH = editor.offsetHeight;
+    startPreviewH = preview.offsetHeight;
+    document.body.style.userSelect = 'none';
+  });
+  document.addEventListener('mousemove', function(e){
+    if(!dragging) return;
+    var dy = e.clientY - startY;
+    var newEditorH = Math.max(60, startEditorH + dy);
+    var newPreviewH = Math.max(60, startPreviewH - dy);
+    editor.style.height = newEditorH + 'px';
+    preview.style.height = newPreviewH + 'px';
+  });
+  document.addEventListener('mouseup', function(){
+    if(dragging){ dragging=false; document.body.style.userSelect = ''; }
+  });
+  // Touch support
+  divider.addEventListener('touchstart', function(e){ startY = e.touches[0].clientY; dragging=true; startEditorH = editor.offsetHeight; startPreviewH = preview.offsetHeight; });
+  document.addEventListener('touchmove', function(e){ if(!dragging) return; var dy = e.touches[0].clientY - startY; editor.style.height = Math.max(60, startEditorH + dy) + 'px'; preview.style.height = Math.max(60, startPreviewH - dy) + 'px'; });
+  document.addEventListener('touchend', function(){ dragging=false; });
+})();
+</script>
 </body>
 </html>`
