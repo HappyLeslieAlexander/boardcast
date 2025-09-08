@@ -9,7 +9,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 	<meta name="viewport" content="width=device-width,initial-scale=1">
 	<style>
 		*{box-sizing:border-box}
-		body{margin:0;padding:10px;height:100vh;display:flex;flex-direction:column;font-family:system-ui,sans-serif;background:#f5f5f5;transition:all .5s}
+		body{margin:0;padding:10px;height:100vh;display:flex;flex-direction:column;font-family:system-ui,sans-serif;background:#f5f5f5;transition:all .5s;overflow:hidden}
 		.header{display:flex;justify-content:space-between;align-items:center;margin-bottom:15px}
 		.logo{display:flex;align-items:center;gap:10px}
 		.logo-text-1{font-size:18px;font-weight:600;color:#8fbffa;margin-right:-10px}
@@ -40,7 +40,7 @@ const WhiteboardHTML = `<!DOCTYPE html>
 		@media(max-width:768px){body{padding:10px}#whiteboard{padding:15px}}
 	
 /* --- Added styles for markdown preview placeholder, dark mode, responsive and draggable divider --- */
-.editor-container{display:flex;flex-direction:column;height:60vh;min-height:300px;border-radius:8px;overflow:hidden}
+.editor-container{display:flex;flex-direction:column;flex:1;min-height:0;border-radius:8px;overflow:hidden}
 #whiteboard{flex:1;min-height:120px;padding:10px;font-family:inherit;border:1px solid #ddd;border-bottom:none;resize:none;background:transparent}
 #divider{height:8px;cursor:row-resize;display:block;background:linear-gradient(90deg, rgba(0,0,0,0.06), rgba(0,0,0,0.12));align-items:center;justify-content:center}
 #divider .bar{width:60px;height:4px;border-radius:3px;margin:2px auto;opacity:.6}
@@ -148,21 +148,28 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
 			}).then(r=>r.ok?r.text():Promise.reject()).then(()=>{
 				auth=true;p.disabled=true;p.value='';w.style.display='block';h.style.display='none';
 				a.querySelector('path').setAttribute('d',icons.disconnect);
-				fetch('/content',{credentials:'include'}).then(r=>r.text()).then(c=>w.value=c);
+				fetch('/content',{credentials:'include'}).then(r=>r.text()).then(c=>{
+					w.value=c;
+					updatePreview(); // 认证完成后立即更新markdown预览
+				});
 				connect();updateButtons()
 			}).catch(()=>{p.value='';updateButtons()}),
 			
 			disconnect=()=>fetch('/logout',{method:'POST',credentials:'include'}).finally(()=>{
 				timer&&(clearTimeout(timer),timer=null);s?.close();auth=false;p.value='';p.disabled=false;
 				w.style.display='none';h.style.display='flex';w.value='';
-				a.querySelector('path').setAttribute('d',icons.connect);status('disconnected');updateButtons()
+				a.querySelector('path').setAttribute('d',icons.connect);status('disconnected');updateButtons();
+				// 退出认证后清空markdown预览区
+				var inner = document.getElementById('preview-inner');
+				if(inner) inner.innerHTML = '<div class="preview-placeholder">预览区：暂无内容 — 开始输入 Markdown 或粘贴文本以查看渲染结果。</div>';
 			}),
 			
 			init=()=>fetch('/content',{credentials:'include'}).then(r=>{
 				if(r.ok)return r.text();throw new Error('Not authenticated')
 			}).then(c=>{
 				auth=true;p.disabled=true;p.value='';w.style.display='block';h.style.display='none';
-				a.querySelector('path').setAttribute('d',icons.disconnect);w.value=c;connect();updateButtons()
+				a.querySelector('path').setAttribute('d',icons.disconnect);w.value=c;connect();updateButtons();
+				updatePreview(); // 初始化时也更新markdown预览
 			}).catch(()=>{status('disconnected');updateButtons()}),
 			
 			snap=(u)=>auth&&fetch(u,{method:'POST',credentials:'include'}).catch(()=>{});
@@ -191,29 +198,41 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
     window.addEventListener('load', updatePreview);
   </script>
 <script>
-// Divider drag to resize editor and preview (non-invasive)
+// Divider drag to resize editor and preview
 (function(){
   var divider = document.getElementById('divider');
   var editor = document.getElementById('whiteboard');
   var preview = document.getElementById('preview');
   if(!divider || !editor || !preview) return;
-  // ensure manual heights work by turning off flexible auto-sizing
-  try {
-    editor.style.flex = '0 0 auto';
-    preview.style.flex = '0 0 auto';
-    // if heights not set, initialize them to current offset heights
-    if(!editor.style.height) editor.style.height = editor.offsetHeight + 'px';
-    if(!preview.style.height) preview.style.height = preview.offsetHeight + 'px';
-  } catch(e) {}
+  
+  // 初始化时设置默认高度（对半平分）
+  function initializeHeights() {
+    var container = document.querySelector('.editor-container');
+    if(!container) return;
+    var containerHeight = container.offsetHeight;
+    var dividerHeight = 8; // divider高度
+    var availableHeight = containerHeight - dividerHeight;
+    var halfHeight = Math.floor(availableHeight / 2);
+    
+    editor.style.height = halfHeight + 'px';
+    preview.style.height = halfHeight + 'px';
+  }
+  
+  // 页面加载完成后初始化高度
+  setTimeout(initializeHeights, 100);
+  
   var dragging = false;
   var startY, startEditorH, startPreviewH;
+  
   divider.addEventListener('mousedown', function(e){
     dragging = true;
     startY = e.clientY;
     startEditorH = editor.offsetHeight;
     startPreviewH = preview.offsetHeight;
     document.body.style.userSelect = 'none';
+    e.preventDefault();
   });
+  
   document.addEventListener('mousemove', function(e){
     if(!dragging) return;
     var dy = e.clientY - startY;
@@ -221,10 +240,16 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
     var newPreviewH = Math.max(60, startPreviewH - dy);
     editor.style.height = newEditorH + 'px';
     preview.style.height = newPreviewH + 'px';
+    e.preventDefault();
   });
+  
   document.addEventListener('mouseup', function(){
-    if(dragging){ dragging=false; document.body.style.userSelect = ''; }
+    if(dragging){ 
+      dragging=false; 
+      document.body.style.userSelect = ''; 
+    }
   });
+  
   // Touch support
   divider.addEventListener('touchstart', function(e){
     startY = e.touches[0].clientY;
@@ -232,7 +257,9 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
     startEditorH = editor.offsetHeight;
     startPreviewH = preview.offsetHeight;
     document.body.style.userSelect = 'none';
+    e.preventDefault();
   });
+  
   document.addEventListener('touchmove', function(e){
     if(!dragging) return;
     var dy = e.touches[0].clientY - startY;
@@ -242,7 +269,21 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
     preview.style.height = newPreviewH + 'px';
     e.preventDefault();
   }, {passive:false});
-  document.addEventListener('touchend', function(){ if(dragging){ dragging=false; document.body.style.userSelect = ''; } });;;
+  
+  document.addEventListener('touchend', function(){ 
+    if(dragging){ 
+      dragging=false; 
+      document.body.style.userSelect = ''; 
+    } 
+  });
+  
+  // 窗口大小改变时重新初始化
+  window.addEventListener('resize', function(){
+    if(!dragging) {
+      setTimeout(initializeHeights, 100);
+    }
+  });
+})();
 </script>
 </body>
 </html>`
