@@ -8,6 +8,7 @@ import (
 	"github.com/yosebyte/boardcast/internal/auth"
 	"github.com/yosebyte/boardcast/internal/template"
 	"github.com/yosebyte/boardcast/internal/websocket"
+	"strconv"
 )
 
 // Handlers contains all HTTP handlers for the application.
@@ -29,7 +30,7 @@ func New(authManager *auth.Manager, wsHub *websocket.Hub, version string) *Handl
 // ServeWhiteboard serves the main whiteboard page.
 func (h *Handlers) ServeWhiteboard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, template.WhiteboardHTML, h.version)
+	fmt.Fprintf(w, template.WhiteboardHTML, strconv.Quote(h.wsHub.GetContent()), h.version)
 }
 
 // HandleAuth handles authentication requests.

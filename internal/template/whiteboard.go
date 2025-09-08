@@ -61,6 +61,7 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
   <script src="https://cdn.jsdelivr.net/npm/dompurify@3.0.6/dist/purify.min.js"></script>
 </head>
 <body>
+  <script>const initialContent = %s;</script>
 	<div class="header">
 		<div class="logo">
 			<svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 14 14">
@@ -177,7 +178,7 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
 	</script>
   <script>
     function updatePreview() {
-      var raw = document.getElementById('whiteboard').value || '';
+      var raw = document.getElementById('whiteboard').value || (typeof initialContent !== 'undefined' ? initialContent : '');
       var html = raw.trim() ? DOMPurify.sanitize(marked.parse(raw)) : '';
       var inner = document.getElementById('preview-inner');
       if(raw.trim()==='') {
@@ -195,7 +196,7 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
   var divider = document.getElementById('divider');
   var editor = document.getElementById('whiteboard');
   var preview = document.getElementById('preview');
-  if(!divider||!editor||!preview) return;
+  if(!divider || !editor || !preview) return;
   var dragging = false;
   var startY, startEditorH, startPreviewH;
   divider.addEventListener('mousedown', function(e){
@@ -217,10 +218,24 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
     if(dragging){ dragging=false; document.body.style.userSelect = ''; }
   });
   // Touch support
-  divider.addEventListener('touchstart', function(e){ startY = e.touches[0].clientY; dragging=true; startEditorH = editor.offsetHeight; startPreviewH = preview.offsetHeight; });
-  document.addEventListener('touchmove', function(e){ if(!dragging) return; var dy = e.touches[0].clientY - startY; editor.style.height = Math.max(60, startEditorH + dy) + 'px'; preview.style.height = Math.max(60, startPreviewH - dy) + 'px'; });
-  document.addEventListener('touchend', function(){ dragging=false; });
-})();
+  divider.addEventListener('touchstart', function(e){
+    startY = e.touches[0].clientY;
+    dragging = true;
+    startEditorH = editor.offsetHeight;
+    startPreviewH = preview.offsetHeight;
+    document.body.style.userSelect = 'none';
+  });
+  document.addEventListener('touchmove', function(e){
+    if(!dragging) return;
+    var dy = e.touches[0].clientY - startY;
+    var newEditorH = Math.max(60, startEditorH + dy);
+    var newPreviewH = Math.max(60, startPreviewH - dy);
+    editor.style.height = newEditorH + 'px';
+    preview.style.height = newPreviewH + 'px';
+    e.preventDefault();
+  }, {passive:false});
+  document.addEventListener('touchend', function(){ if(dragging){ dragging=false; document.body.style.userSelect = ''; } });
+})();;
 </script>
 </body>
 </html>`
