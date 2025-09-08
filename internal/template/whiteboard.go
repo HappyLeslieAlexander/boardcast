@@ -197,6 +197,14 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
   var editor = document.getElementById('whiteboard');
   var preview = document.getElementById('preview');
   if(!divider || !editor || !preview) return;
+  // ensure manual heights work by turning off flexible auto-sizing
+  try {
+    editor.style.flex = '0 0 auto';
+    preview.style.flex = '0 0 auto';
+    // if heights not set, initialize them to current offset heights
+    if(!editor.style.height) editor.style.height = editor.offsetHeight + 'px';
+    if(!preview.style.height) preview.style.height = preview.offsetHeight + 'px';
+  } catch(e) {}
   var dragging = false;
   var startY, startEditorH, startPreviewH;
   divider.addEventListener('mousedown', function(e){
@@ -234,8 +242,7 @@ body.dark .preview-wrapper{--preview-bg:#111;--preview-color:#f5f5f5;--placehold
     preview.style.height = newPreviewH + 'px';
     e.preventDefault();
   }, {passive:false});
-  document.addEventListener('touchend', function(){ if(dragging){ dragging=false; document.body.style.userSelect = ''; } });
-})();;
+  document.addEventListener('touchend', function(){ if(dragging){ dragging=false; document.body.style.userSelect = ''; } });;;
 </script>
 </body>
 </html>`

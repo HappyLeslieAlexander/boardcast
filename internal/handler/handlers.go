@@ -30,7 +30,11 @@ func New(authManager *auth.Manager, wsHub *websocket.Hub, version string) *Handl
 // ServeWhiteboard serves the main whiteboard page.
 func (h *Handlers) ServeWhiteboard(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprintf(w, template.WhiteboardHTML, strconv.Quote(h.wsHub.GetContent()), h.version)
+	if h.auth.IsAuthenticated(r) {
+		fmt.Fprintf(w, template.WhiteboardHTML, strconv.Quote(h.wsHub.GetContent()), h.version)
+	} else {
+		fmt.Fprintf(w, template.WhiteboardHTML, strconv.Quote(""), h.version)
+	}
 }
 
 // HandleAuth handles authentication requests.
